@@ -1,0 +1,211 @@
+<!-- Final version of single select dropdown -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accessible Listbox with Keyboard Navigation</title>
+  <style>
+    /* Style the unordered list */
+    ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      width: 200px;
+      background-color: #f4f4f4;
+      border-radius: 5px;
+      display: none;  /* Initially hidden */
+      position: absolute;
+      top: 50px;
+      left: 0;
+      z-index: 1000;
+    }
+
+    /* Style each list item */
+    li {
+      padding: 10px;
+      margin: 5px 0;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      font-family: Arial, sans-serif;
+      transition: background-color 0.3s;
+      cursor: pointer;
+    }
+
+    /* Hover effect */
+    li:hover {
+      background-color: #e0e0e0;
+    }
+
+    /* Selected state */
+    li.selected {
+      background-color: #3498db !important;
+      color: white !important;
+    }
+
+    /* Focus state for accessibility */
+    li:focus {
+      outline: none;
+      background-color: #3498db !important;
+      color: white !important;
+    }
+
+    /* Style the input field */
+    input {
+      width: 200px;
+      padding: 10px;
+      margin: 20px 0;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Input field to toggle the listbox -->
+  <input type="text" id="listboxInput" aria-label="Search or select an item" placeholder="Focus or click to toggle listbox" aria-pressed="false">
+
+  <!-- Listbox -->
+  <ul role="listbox" aria-labelledby="listbox-label" id="listbox">
+    <li role="option" tabindex="0" aria-selected="false">Item 1</li>
+    <li role="option" tabindex="-1" aria-selected="false">Item 2</li>
+    <li role="option" tabindex="-1" aria-selected="false">Item 3</li>
+  </ul>
+
+  <script>
+    var liItems = Array.from(document.querySelectorAll('ul[role="listbox"] li[role="option"]'));
+    var listbox = document.getElementById('listbox');
+    var inputField = document.getElementById('listboxInput');
+
+    // Flag to track if the listbox is open
+    var listboxVisible = false;
+
+    // Function to toggle the visibility of the listbox
+    function toggleListbox() {
+      if (listboxVisible) {
+        listbox.style.display = 'none';  // Hide the listbox
+        inputField.setAttribute('aria-pressed', 'false');
+      } else {
+        listbox.style.display = 'block';  // Show the listbox
+        inputField.setAttribute('aria-pressed', 'true');
+      }
+      // Toggle the visibility flag
+      listboxVisible = !listboxVisible;
+    }
+
+    // Function to update tabindex dynamically for list items
+    function updateTabIndex() {
+      liItems.forEach(function(li, index) {
+        if (li === document.activeElement) {
+          li.setAttribute('tabindex', '0');  // Current focused item gets tabindex=0
+        } else {
+          li.setAttribute('tabindex', '-1');  // Other items are not focusable
+        }
+      });
+    }
+
+    // Function to handle click selection
+    function selectItem(event) {
+      var li = event.target;
+      // Push selected item into the input field
+      inputField.value = li.textContent;
+
+      // Toggle selection state
+      if (li.classList.contains('selected')) {
+        li.classList.remove('selected');
+        li.setAttribute('aria-selected', 'false');
+      } else {
+        li.classList.add('selected');
+        li.setAttribute('aria-selected', 'true');
+      }
+
+      // Close the listbox after selection
+      listbox.style.display = 'none';
+      inputField.setAttribute('aria-pressed', 'false');
+      listboxVisible = false;
+
+      // Focus back to the input field
+      inputField.focus();
+    }
+
+    // Function to handle keyboard selection (space or enter key)
+    function handleKeyboardSelection(event) {
+      var li = event.target;
+      if (event.key === 'Enter' || event.key === ' ') {
+        // Push selected item into the input field
+        inputField.value = li.textContent;
+
+        // Toggle selection state
+        if (li.classList.contains('selected')) {
+          li.classList.remove('selected');
+          li.setAttribute('aria-selected', 'false');
+        } else {
+          li.classList.add('selected');
+          li.setAttribute('aria-selected', 'true');
+        }
+
+        // Close the listbox after selection
+        listbox.style.display = 'none';
+        inputField.setAttribute('aria-pressed', 'false');
+        listboxVisible = false;
+
+        // Focus back to the input field
+        inputField.focus();
+      }
+    }
+
+    // Function to handle circular keyboard navigation (up/down arrow keys)
+    function handleKeyboardNavigation(event) {
+      var currentIndex = liItems.indexOf(document.activeElement);
+      if (currentIndex === -1) return;
+
+      // Arrow Up
+      if (event.key === 'ArrowUp') {
+        if (currentIndex > 0) {
+          liItems[currentIndex - 1].focus();
+        } else {
+          liItems[liItems.length - 1].focus();  // Wrap around to last item
+        }
+      }
+      // Arrow Down
+      else if (event.key === 'ArrowDown') {
+        if (currentIndex < liItems.length - 1) {
+          liItems[currentIndex + 1].focus();
+        } else {
+          liItems[0].focus();  // Wrap around to first item
+        }
+      }
+
+      updateTabIndex();  // Update tabindex after navigation
+    }
+
+    // Event listeners for each <li> item
+    liItems.forEach(function(li) {
+      li.addEventListener('click', selectItem);
+      li.addEventListener('keydown', handleKeyboardSelection);
+      li.addEventListener('keydown', handleKeyboardNavigation);
+    });
+
+    // Open the listbox when the Enter key is pressed or the input field is clicked
+    inputField.addEventListener('click', toggleListbox);
+    inputField.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        toggleListbox();  // Open the listbox if Enter is pressed
+      }
+    });
+
+    // Close the listbox when clicking outside the input or listbox
+    document.addEventListener('click', function(event) {
+      if (!listbox.contains(event.target) && event.target !== inputField) {
+        listbox.style.display = 'none';
+        inputField.setAttribute('aria-pressed', 'false');
+        listboxVisible = false;
+      }
+    });
+  </script>
+
+</body>
+</html>

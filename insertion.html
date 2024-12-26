@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic text insertion with user action</title>
+    <style>
+     /* Basic page styling */
+        body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f0f0f0;
+        }
+
+        /* Style for the div that will display text */
+        #contentDiv {
+        font-size: 18px;
+        color: #333;
+        padding: 10px;
+        margin-bottom: 20px;
+        background-color: #e0e0e0;
+        border-radius: 5px;
+        width: 300px;
+        text-align: center;
+        opacity: 0;
+        transition: opacity 1s ease;
+        }
+
+        /* Style for the button */
+        #insertButton {
+        padding: 10px 20px;
+        font-size: 16px;
+        color: #fff;
+        background-color: #007bff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        }
+
+        #insertButton:hover {
+        background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="contentDiv"></div>
+    <button id="insertButton">Click me</button>
+    <script>
+       // Get references to the button and the div
+        const button = document.getElementById('insertButton');
+        const contentDiv = document.getElementById('contentDiv');
+
+        // Function to insert text and then remove it after 1 second
+        button.addEventListener('click', () => {
+        // Insert text into the div and fade it in
+        contentDiv.innerText = 'This is the inserted text!';
+        contentDiv.style.opacity = 1; // Make it visible
+        
+        // Set a timeout to remove the text after 1 second (1000 ms)
+        setTimeout(() => {
+            contentDiv.style.opacity = 0; // Start fading out
+            // Clear the text after the fade-out completes (1 second)
+            setTimeout(() => {
+            contentDiv.innerText = ''; // Clear the content
+            }, 1000);
+        }, 1000);
+        });
+
+   </script>
+</body>
+</html>

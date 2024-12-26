@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        /* Basic styling for the clock */
+body {
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  background-color: #f0f0f0;
+}
+
+#clock {
+  font-size: 48px;
+  font-weight: bold;
+  padding: 20px;
+  background-color: #333;
+  color: white;
+  border-radius: 10px;
+  text-align: center;
+}
+
+    </style>
+</head>
+<body>
+    <div id="clock">Loading...</div>
+    <script>
+        // Get reference to the clock div
+const clockDiv = document.getElementById('clock');
+
+// Function to update the clock
+function updateClock() {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+
+  // Update the clock div with the current time
+  clockDiv.innerText = `${hours}:${minutes}:${seconds}`;
+}
+
+// Call the updateClock function immediately to display the time as soon as the page loads
+updateClock();
+
+// Use setInterval to update the clock every 1000ms (1 second)
+setInterval(updateClock, 1000);
+
+    </script>
+</body>
+</html>

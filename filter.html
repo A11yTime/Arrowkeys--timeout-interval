@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accessible Multi-Select Listbox with Keyboard Navigation</title>
+  <style>
+    /* Style the unordered list */
+    ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 1px 30px;
+      width: 300px;
+      background-color: #f4f4f4;
+      border-radius: 5px;
+      display: none;  /* Initially hidden */
+      position: absolute;
+      z-index: 1000;
+    }
+
+    /* Style each list item */
+    li {
+      padding: 10px;
+      margin: 5px 0;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      font-family: Arial, sans-serif;
+      transition: background-color 0.3s;
+      cursor: pointer;
+    }
+
+    /* Hover effect */
+    li:hover {
+      background-color: #e0e0e0;
+    }
+
+    /* Selected state */
+    li.selected {
+      background-color: #3498db !important;
+      color: white !important;
+    }
+
+    /* Focus state for accessibility */
+    li:focus {
+      outline: 2px solid blue;
+    }
+
+    /* Style the input field */
+    input {
+      width: 300px;
+      padding: 10px;
+      margin: 0 30px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    .selected-items {
+      margin: 10px 30px;
+      font-size: 24px;
+      background-color: blue;
+      width: 500px;
+      padding: 2rem;
+      color: white;
+      min-height: 30px;
+    }
+
+    .container {
+      position: relative;
+    }
+
+    .second-child {
+      position: absolute;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="container">    
+    <!-- Input field to toggle the listbox -->
+    <div class="selected-items" id="selectedItemsDisplay" aria-live="assertive" aria-atomic="true">Selected items: </div>
+    <input type="text" id="listboxInput" aria-label="Search or select multiple items" placeholder="Search or click to toggle listbox" aria-pressed="false">
+    <div class="second-child">
+         <!-- Listbox -->
+         <ul role="listbox" aria-labelledby="listbox-label" id="listbox">
+           <li role="option" tabindex="0" aria-selected="false">Item 1</li>
+           <li role="option" tabindex="-1" aria-selected="false">Item 2</li>
+           <li role="option" tabindex="-1" aria-selected="false">Item 3</li>
+           <li role="option" tabindex="-1" aria-selected="false">Item 4</li>
+           <li role="option" tabindex="-1" aria-selected="false">Item 5</li>
+           <li role="option" tabindex="-1" aria-selected="false">Item 6</li>
+         </ul>
+     </div>
+</div>
+
+<script>
+  var liItems = Array.from(document.querySelectorAll('ul[role="listbox"] li[role="option"]'));
+  var listbox = document.getElementById('listbox');
+  var inputField = document.getElementById('listboxInput');
+  var selectedItemsDisplay = document.getElementById('selectedItemsDisplay');
+
+  // Array to track selected items
+  var selectedItems = [];
+
+  // Flag to track if the listbox is open
+  var listboxVisible = false;
+
+  // Function to toggle the visibility of the listbox
+  function toggleListbox() {
+    if (listboxVisible) {
+      listbox.style.display = 'none';  // Hide the listbox
+      inputField.setAttribute('aria-pressed', 'false');
+    } else {
+      listbox.style.display = 'block';  // Show the listbox
+      inputField.setAttribute('aria-pressed', 'true');
+    }
+    // Toggle the visibility flag
+    listboxVisible = !listboxVisible;
+  }
+
+  // Function to update tabindex dynamically for list items
+  function updateTabIndex() {
+    liItems.forEach(function(li, index) {
+      if (li === document.activeElement) {
+        li.setAttribute('tabindex', '0');  // Current focused item gets tabindex=0
+      } else {
+        li.setAttribute('tabindex', '-1');  // Other items are not focusable
+      }
+    });
+  }
+
+  // Function to filter the list based on the input field
+  function filterList() {
+    var searchTerm = inputField.value.toLowerCase();
+    liItems.forEach(function(li) {
+      var text = li.textContent.toLowerCase();
+      if (text.includes(searchTerm)) {
+        li.style.display = 'block';  // Show the item if it matches the search term
+      } else {
+        li.style.display = 'none';  // Hide the item if it doesn't match
+      }
+    });
+  }
+
+  // Function to handle click selection
+  function selectItem(event) {
+    var li = event.target;
+    // Toggle selection state
+    if (li.classList.contains('selected')) {
+      li.classList.remove('selected');
+      li.setAttribute('aria-selected', 'false');
+      // Remove item from selectedItems array
+      selectedItems = selectedItems.filter(item => item !== li.textContent);
+    } else {
+      li.classList.add('selected');
+      li.setAttribute('aria-selected', 'true');
+      // Add item to selectedItems array
+      selectedItems.push(li.textContent);
+    }
+
+    // Update the display of selected items
+    selectedItemsDisplay.textContent = 'Selected items: ' + selectedItems.join(', ');
+
+    // Move focus to the selected items display (instead of input)
+    selectedItemsDisplay.focus();
+  }
+
+  // Function to handle keyboard selection (space or enter key)
+  function handleKeyboardSelection(event) {
+    var li = event.target;
+    if (event.key === 'Enter' || event.key === ' ') {
+      // Toggle selection state
+      if (li.classList.contains('selected')) {
+        li.classList.remove('selected');
+        li.setAttribute('aria-selected', 'false');
+        selectedItems = selectedItems.filter(item => item !== li.textContent);
+      } else {
+        li.classList.add('selected');
+        li.setAttribute('aria-selected', 'true');
+        selectedItems.push(li.textContent);
+      }
+
+      // Update the display of selected items
+      selectedItemsDisplay.textContent = 'Selected items: ' + selectedItems.join(', ');
+
+      // Move focus to the selected items display (instead of input)
+      selectedItemsDisplay.focus();
+    }
+  }
+
+  // Function to handle circular keyboard navigation (up/down arrow keys)
+  function handleKeyboardNavigation(event) {
+    var currentIndex = liItems.indexOf(document.activeElement);
+    if (currentIndex === -1) return;
+
+    // Arrow Up
+    if (event.key === 'ArrowUp') {
+      if (currentIndex > 0) {
+        liItems[currentIndex - 1].focus();
+      } else {
+        liItems[liItems.length - 1].focus();  // Wrap around to last item
+      }
+    }
+    // Arrow Down
+    else if (event.key === 'ArrowDown') {
+      if (currentIndex < liItems.length - 1) {
+        liItems[currentIndex + 1].focus();
+      } else {
+        liItems[0].focus();  // Wrap around to first item
+      }
+    }
+
+    updateTabIndex();  // Update tabindex after navigation
+  }
+
+  // Event listeners for each <li> item
+  liItems.forEach(function(li) {
+    li.addEventListener('click', selectItem);
+    li.addEventListener('keydown', handleKeyboardSelection);
+    li.addEventListener('keydown', handleKeyboardNavigation);
+  });
+
+  // Open the listbox when the Enter key is pressed or the input field is clicked
+  inputField.addEventListener('click', toggleListbox);
+  inputField.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      toggleListbox();  // Open the listbox if Enter is pressed
+    }
+  });
+
+  // Close the listbox when clicking outside the input or listbox
+  document.addEventListener('click', function(event) {
+    if (!listbox.contains(event.target) && event.target !== inputField) {
+      listbox.style.display = 'none';
+      inputField.setAttribute('aria-pressed', 'false');
+      listboxVisible = false;
+    }
+  });
+
+  // Filter the list as the user types in the input field
+  inputField.addEventListener('input', filterList);
+</script>
+
+</body>
+</html>

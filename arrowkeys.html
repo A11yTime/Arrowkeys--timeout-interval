@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accessible Listbox with Dynamic tabindex</title>
+  <style>
+    /* Style the unordered list */
+    ul {
+      list-style-type: none;  /* Remove default bullets */
+      padding: 0;
+      margin: 0;
+      width: 200px;
+      background-color: #f4f4f4;
+      border-radius: 5px;
+    }
+
+    /* Style each list item */
+    li {
+      padding: 10px;
+      margin: 5px 0;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      font-family: Arial, sans-serif;
+      transition: background-color 0.3s;
+      cursor: pointer;  /* Show pointer cursor on hover */
+    }
+
+    /* Hover effect */
+    li:hover {
+      background-color: #e0e0e0;
+    }
+
+    /* Selected state */
+    li.selected {
+      background-color: #3498db !important; /* Make background color important */
+      color: white !important; /* Make text color white, ensuring it overrides others */
+    }
+
+    /* Focus state for accessibility (when navigating with keyboard) */
+    li:focus {
+      outline: none;
+      background-color: #3498db !important; /* Focused item should also show selected color */
+      color: white !important; /* Ensure text color is white when focused */
+    }
+
+  </style>
+</head>
+<body>
+
+  <ul role="listbox" aria-labelledby="listbox-label">
+    <li role="option" tabindex="-1" aria-selected="false">Item 1</li>
+    <li role="option" tabindex="-1" aria-selected="false">Item 2</li>
+    <li role="option" tabindex="-1" aria-selected="false">Item 3</li>
+  </ul>
+
+  <script>
+    // Get all <li> elements (options)
+    var liItems = Array.from(document.querySelectorAll('ul[role="listbox"] li[role="option"]'));
+
+    // Function to toggle selection on click
+    function toggleSelection(event) {
+      var li = event.target;
+      console.log('Item clicked:', li.textContent); // Debugging line
+
+      // Toggle the 'selected' class and aria-selected attribute
+      if (li.classList.contains('selected')) {
+        li.classList.remove('selected');  // Deselect if already selected
+        li.setAttribute('aria-selected', 'false'); // Update ARIA attribute
+        console.log('Deselecting:', li.textContent); // Debugging line
+      } else {
+        li.classList.add('selected');  // Select if not selected
+        li.setAttribute('aria-selected', 'true'); // Update ARIA attribute
+        console.log('Selecting:', li.textContent); // Debugging line
+      }
+    }
+
+    // Function to handle keyboard selection (space or enter key)
+    function handleKeyboardSelection(event) {
+      var li = event.target;
+      console.log('Key pressed on:', li.textContent); // Debugging line
+
+      // Check if Enter or Space key was pressed
+      if (event.key === 'Enter' || event.key === ' ') {
+        // Toggle selection on Enter or Space key press
+        if (li.classList.contains('selected')) {
+          li.classList.remove('selected');  // Deselect if selected
+          li.setAttribute('aria-selected', 'false'); // Update ARIA attribute
+          console.log('Deselecting:', li.textContent); // Debugging line
+        } else {
+          li.classList.add('selected');  // Select if not selected
+          li.setAttribute('aria-selected', 'true'); // Update ARIA attribute
+          console.log('Selecting:', li.textContent); // Debugging line
+        }
+      }
+    }
+
+    // Function to handle circular keyboard navigation (up/down arrow keys)
+    function handleKeyboardNavigation(event) {
+      var currentIndex = liItems.indexOf(document.activeElement);
+      if (currentIndex === -1) return;
+
+      // Arrow Up
+      if (event.key === 'ArrowUp') {
+        // Move focus to the previous item, or the last item if we are at the first
+        if (currentIndex > 0) {
+          liItems[currentIndex - 1].focus();
+        } else {
+          liItems[liItems.length - 1].focus();  // Wrap around to last item
+        }
+      }
+      // Arrow Down
+      else if (event.key === 'ArrowDown') {
+        // Move focus to the next item, or the first item if we are at the last
+        if (currentIndex < liItems.length - 1) {
+          liItems[currentIndex + 1].focus();
+        } else {
+          liItems[0].focus();  // Wrap around to first item
+        }
+      }
+
+      // Update tabindex for dynamic focusability
+      updateTabIndex();
+    }
+
+    // Function to update the tabindex of list items
+    function updateTabIndex() {
+      liItems.forEach(function(li, index) {
+        if (li === document.activeElement) {
+          li.setAttribute('tabindex', '0');  // Current focused item gets tabindex=0
+        } else {
+          li.setAttribute('tabindex', '-1');  // Other items are not focusable
+        }
+      });
+    }
+
+    // Add event listeners to each <li> item for click, keyboard selection, and navigation
+    liItems.forEach(function(li) {
+      // On mouse click, toggle the selection
+      li.addEventListener('click', toggleSelection);
+
+      // On keyboard interaction (focus + Enter or Space), toggle the selection
+      li.addEventListener('keydown', handleKeyboardSelection);
+
+      // For keyboard navigation (ArrowUp and ArrowDown)
+      li.addEventListener('keydown', handleKeyboardNavigation);
+    });
+
+    // Optional: Focus on the first <li> by default for accessibility
+    liItems[0].focus();
+    updateTabIndex(); // Initialize tabindex on page load
+  </script>
+
+</body>
+</html>
